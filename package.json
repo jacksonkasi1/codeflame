@@ -1,9 +1,9 @@
 {
   "name": "codeflame",
   "displayName": "CodeFlame",
-  "publisher": "jacksonkasi",
+  "version": "1.1.0",
+	"publisher": "jacksonkasi",
   "description": "",
-  "version": "0.0.1",
   "engines": {
     "vscode": "^1.80.0"
   },

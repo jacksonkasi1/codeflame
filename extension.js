@@ -1,42 +1,99 @@
-const vscode = require('vscode');
+const vscode = require("vscode");
+const { schema } = require("./schema");
 
 function activate(context) {
-    var activeEditor = vscode.window.activeTextEditor;
-    var decorationsArray = [];
+  let activeEditor = vscode.window.activeTextEditor;
 
-    const kasiDecorationType = vscode.window.createTextEditorDecorationType({
-        backgroundColor: "#00ff00",
-        color: "white"
-    });
+  const decorationTypes = schema.keys.map((setting) => {
+    const {
+      key,
+      bgColor,
+      color,
+      highlightBg = true,
+      highlightWordsAll = false,
+      highlightLine = false,
+      highlightLineBg = false,
+    } = setting;
 
-    function updateDecorations() {
-        if (activeEditor) {
-            decorationsArray.length = 0;
+    return {
+      key,
+      highlightWordsAll,
+      decoration: vscode.window.createTextEditorDecorationType({
+        backgroundColor: highlightBg ? bgColor : undefined,
+        color: color ? color : undefined,
+        isWholeLine: highlightLine,
+      }),
+    };
+  });
 
-            const regEx = /\/\/.*?\b(kasi)\b/gi;
-            const text = activeEditor.document.getText();
-            let match;
+  function createRegexPattern(keyword, highlightWordsAll) {
+    if (highlightWordsAll) {
+      return `.*${keyword}.*`;
+    }
+    return `\\b${keyword}\\b`;
+  }
 
-            while ((match = regEx.exec(text))) {
-                const startPos = activeEditor.document.positionAt(match.index);
-                const endPos = activeEditor.document.positionAt(match.index + match[0].length);
-                const decoration = { range: new vscode.Range(startPos, endPos) };
-                decorationsArray.push(decoration);
-            }
-            activeEditor.setDecorations(kasiDecorationType, decorationsArray);
-        } 
+  function updateDecorations() {
+    if (!activeEditor) {
+      return;
     }
 
-    if (activeEditor) {
-        updateDecorations();
-    }
+    const text = activeEditor.document.getText();
+    decorationTypes.forEach(({ key, decoration, highlightWordsAll }) => {
+      const regexPattern = createRegexPattern(key, highlightWordsAll);
 
-    vscode.window.onDidChangeActiveTextEditor(editor => {
-        activeEditor = editor;
-        if (editor) {
-            updateDecorations();
+      const decorationsArray = [];
+      const lines = text.split("\n");
+      lines.forEach((lineText, lineNumber) => {
+        if (
+          lineText.includes("//") ||
+          lineText.includes("/*") ||
+          lineText.includes("*/")
+        ) {
+          const regEx = new RegExp(regexPattern, "g");
+          let match;
+          while ((match = regEx.exec(lineText))) {
+            const startPos = new vscode.Position(lineNumber, match.index);
+            const endPos = new vscode.Position(
+              lineNumber,
+              match.index + match[0].length,
+            );
+            const decorationObj = {
+              range: new vscode.Range(startPos, endPos),
+              hoverMessage: match[0],
+            };
+            decorationsArray.push(decorationObj);
+          }
         }
-    }, null, context.subscriptions);
+      });
+      activeEditor.setDecorations(decoration, decorationsArray);
+    });
+  }
+
+  if (activeEditor) {
+    updateDecorations();
+  }
+
+  vscode.window.onDidChangeActiveTextEditor(
+    (editor) => {
+      activeEditor = editor;
+      if (editor) {
+        updateDecorations();
+      }
+    },
+    null,
+    context.subscriptions,
+  );
+
+  vscode.workspace.onDidChangeTextDocument(
+    (event) => {
+      if (activeEditor && event.document === activeEditor.document) {
+        updateDecorations();
+      }
+    },
+    null,
+    context.subscriptions,
+  );
 }
 
 exports.activate = activate;

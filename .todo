@@ -1,0 +1,9 @@
+@todo:
+
+[x] - key = This keyword indicates the word we want to highlight inside the code.
+[x] - bgColor = This is the background color of the highlighted keyword.
+[x] - color = This is the text color of the highlighted keyword.
+[] - highlightBg = By default, this is set to true. If highlightBg is set to false, the word will have a background color but will not be highlighted.
+[] - highlightWordsAll = If highlightWordsAll is set to true, it will check the entire line and highlight all occurrences of the specified keywords in that line.
+[] - highlightLine = This is used to highlight the whole line with a specific color. It will be applied from the first word to the last word of the line, not the entire line.
+[] - highlightLineBg = If highlightLineBg is set to true, the entire line will be highlighted with the specified background color and text color. It will be applied from the first word to the last word of the line, not the entire line.
